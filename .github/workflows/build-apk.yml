@@ -1,4 +1,4 @@
-
+```yaml
 name: Build Ludo Android APK
 
 on:
@@ -29,28 +29,61 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Debug project files
+      - name: Show project files
         run: |
+          echo "Project root:"
           pwd
+          echo "Root files:"
           ls -la
+          echo "Web files:"
           ls -la www || true
-          test -f package.json && echo "package.json OK" || echo "package.json MISSING"
-          test -f capacitor.config.json && echo "capacitor.config.json OK" || echo "capacitor.config.json MISSING"
-          test -f www/index.html && echo "index.html OK" || echo "index.html MISSING"
-          test -f www/app.js && echo "app.js OK" || echo "app.js MISSING"
-          test -f www/style.css && echo "style.css OK" || echo "style.css MISSING"
+          echo "Capacitor configuration:"
+          find . -maxdepth 2 -type f \
+            \( -name 'capacitor.config.*' -o -name 'package.json' \) \
+            -not -path './node_modules/*' -print
 
-      - name: Verify required web assets
+      - name: Verify required project files
         run: |
-          test -f package.json
-          test -f capacitor.config.json
-          test -f www/index.html
-          test -f www/app.js
-          test -f www/style.css
-          node --check www/app.js
+          set -eu
+
+          test -f package.json || {
+            echo "ERROR: package.json is missing from the repository root."
+            exit 1
+          }
+
+          if [ ! -f capacitor.config.json ] && \
+             [ ! -f capacitor.config.ts ] && \
+             [ ! -f capacitor.config.js ]; then
+            echo "ERROR: Capacitor configuration is missing."
+            echo "Expected capacitor.config.json, .ts, or .js."
+            exit 1
+          fi
+
+          test -f www/index.html || {
+            echo "ERROR: www/index.html is missing."
+            exit 1
+          }
+
+          test -f www/app.js || {
+            echo "ERROR: www/app.js is missing."
+            exit 1
+          }
+
+          test -f www/style.css || {
+            echo "ERROR: www/style.css is missing."
+            exit 1
+          }
+
+          echo "All required project files were found."
+
+      - name: Check JavaScript syntax
+        run: node --check www/app.js
 
       - name: Install dependencies
         run: npm install
+
+      - name: Check Capacitor
+        run: npx cap --version
 
       - name: Add Android platform if missing
         run: |
@@ -74,3 +107,4 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 7
+```
