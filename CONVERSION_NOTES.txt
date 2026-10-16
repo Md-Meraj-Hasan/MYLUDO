@@ -1,0 +1,10 @@
+Conversion notes
+================
+Input source used: python_ludo(2).py (latest available Ludo Python source in the user's Library, 57,149 bytes).
+Target: HTML + CSS + JavaScript + Capacitor Android wrapper.
+
+The JavaScript path generator uses the same 58-position route layout as the Python source, including the extra outer corner at positions 50/51 and six home-lane cells at positions 52–57. It ports the custom 35% six chance, yard entry on six, safe squares, protected stacks, capture/home unlock, exact finish, extra turns, and third-consecutive-six turn rollback.
+
+GUI is recreated using responsive SVG/HTML, not mechanically converted from Tkinter. A few UI/animation details differ. Treat this as a conversion draft and verify gameplay edge cases against the Python source before publishing.
+
+GUI correction: removed internal grid lines from the four home yards; player names now appear on a separate row above the dice control.
