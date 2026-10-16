@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f7f8fb">
+<title>Ludo Friendly Professional</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="header"><div class="title">LUDO FRIENDLY PROFESSIONAL</div><div class="creator">Created by @cd786hassan</div><div class="subtitle">Powered by Python</div></header>
+  <section id="playerSetup" class="setup panel">
+    <h1>New Game</h1>
+    <label for="playerCount">Number of players</label>
+    <select id="playerCount"><option value="2">2 Players</option><option value="3">3 Players</option><option value="4" selected>4 Players</option></select>
+    <div id="nameInputs" class="name-inputs"></div>
+    <button id="startGame" class="primary">START GAME</button>
+    <p class="hint">Offline game · Touch the dice to roll and tap a highlighted token to move.</p>
+  </section>
+  <main id="game" class="hidden">
+    <div class="player-row top-row" id="topPlayers"></div>
+    <div class="board-wrap"><svg id="board" viewBox="0 0 600 600" role="img" aria-label="Ludo board"></svg></div>
+    <div class="player-row bottom-row" id="bottomPlayers"></div>
+    <div class="status panel"><div id="turnStatus">Green's turn</div><div id="diceHint">Tap the active player's dice.</div><button id="newGame" class="secondary">NEW GAME</button></div>
+  </main>
+</div>
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-card"><h2 id="modalTitle">Message</h2><p id="modalMessage"></p><button id="modalOk" class="primary">OK</button></div></div>
+<script src="app.js"></script>
+</body>
+</html>
