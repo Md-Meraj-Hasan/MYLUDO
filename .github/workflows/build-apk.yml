@@ -1,4 +1,4 @@
-
+```yaml
 name: Build Ludo Android APK
 
 on:
@@ -12,7 +12,6 @@ permissions:
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -30,27 +29,22 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Diagnose project files
+      - name: Verify Java version
         run: |
-          echo "=== Repository root ==="
+          java -version
+          echo "JAVA_HOME=$JAVA_HOME"
+          which java
+
+      - name: Check project files
+        run: |
           pwd
           ls -la
-          echo "=== Web assets ==="
-          if [ -d www ]; then
-            ls -la www
-          else
-            echo "MISSING DIRECTORY: www"
-            exit 1
-          fi
-          echo "=== Checking required files ==="
-          test -f package.json || { echo "MISSING: package.json"; exit 1; }
-          test -f capacitor.config.json || { echo "MISSING: capacitor.config.json"; exit 1; }
-          test -f www/index.html || { echo "MISSING: www/index.html"; exit 1; }
-          test -f www/app.js || { echo "MISSING: www/app.js"; exit 1; }
-          test -f www/style.css || { echo "MISSING: www/style.css"; exit 1; }
-          echo "=== JavaScript syntax ==="
+          test -f package.json
+          test -f capacitor.config.json
+          test -f www/index.html
+          test -f www/app.js
+          test -f www/style.css
           node --check www/app.js
-          echo "All required files passed checks."
 
       - name: Install dependencies
         run: npm install
@@ -59,7 +53,20 @@ jobs:
         run: npx cap add android
 
       - name: Sync web assets
-        run: npx cap sync android
+        run: |
+          npx cap sync android
+
+          echo "=== ANDROID INDEX.HTML CHECK ==="
+          grep -n -E 'soundToggle|cd786hassan' \
+            android/app/src/main/assets/public/index.html
+
+          echo "=== ANDROID APP.JS CHECK ==="
+          grep -n -E 'soundToggle|showConfirm' \
+            android/app/src/main/assets/public/app.js
+
+          echo "=== ANDROID CSS CHECK ==="
+          grep -n -E 'sound-toggle|developer-credit|modal-actions' \
+            android/app/src/main/assets/public/style.css
 
       - name: Build debug APK
         run: |
@@ -67,10 +74,15 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK artifact
+      - name: Verify APK
+        run: |
+          test -f android/app/build/outputs/apk/debug/app-debug.apk
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+          sha256sum android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Ludo-Android-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 7
