@@ -1,4 +1,4 @@
-```yaml
+
 name: Build Ludo Android APK
 
 on:
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -37,14 +38,21 @@ jobs:
 
       - name: Check project files
         run: |
+          echo "=== Repository root ==="
           pwd
           ls -la
+
+          echo "=== Check required files ==="
           test -f package.json
           test -f capacitor.config.json
           test -f www/index.html
           test -f www/app.js
           test -f www/style.css
+
+          echo "=== JavaScript syntax check ==="
           node --check www/app.js
+
+          echo "All required files passed checks."
 
       - name: Install dependencies
         run: npm install
@@ -77,7 +85,9 @@ jobs:
       - name: Verify APK
         run: |
           test -f android/app/build/outputs/apk/debug/app-debug.apk
+          echo "=== APK FILE ==="
           ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+          echo "=== APK SHA256 ==="
           sha256sum android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload APK
@@ -86,3 +96,4 @@ jobs:
           name: Ludo-Android-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 7
