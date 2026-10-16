@@ -26,6 +26,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+            - name: Debug project files
+        run: |
+          pwd
+          ls -la
+          ls -la www || true
+          test -f package.json && echo "package.json OK" || echo "package.json MISSING"
+          test -f capacitor.config.json && echo "capacitor.config.json OK" || echo "capacitor.config.json MISSING"
+          test -f www/index.html && echo "index.html OK" || echo "index.html MISSING"
+          test -f www/app.js && echo "app.js OK" || echo "app.js MISSING"
+          test -f www/style.css && echo "style.css OK" || echo "style.css MISSING"
 
       - name: Verify required web assets
         run: |
