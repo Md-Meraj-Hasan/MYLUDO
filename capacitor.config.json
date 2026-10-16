@@ -1,0 +1,6 @@
+{
+  "appId": "org.merajgames.ludoprooffline",
+  "appName": "Ludo Pro Offline",
+  "webDir": "www",
+  "server": { "androidScheme": "https" }
+}
