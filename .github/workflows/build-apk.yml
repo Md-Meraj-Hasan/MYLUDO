@@ -25,16 +25,17 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
-      - name: Verify required web assets
+      - name: Build debug APK
         run: |
-          test -f package.json
-          test -f capacitor.config.json
-          test -f www/index.html
-          test -f www/app.js
-          test -f www/style.css
-          node --check www/app.js
+          java -version
+          javac -version
+          cd android
+          chmod +x gradlew
+          ./gradlew --stop
+          ./gradlew assembleDebug --no-daemon \
+            -Dorg.gradle.java.home="$JAVA_HOME"
 
       - name: Install dependencies
         run: npm install
