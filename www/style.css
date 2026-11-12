@@ -2,7 +2,7 @@
 
 .sound-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:32px;margin-top:6px;padding:5px 12px;border:1px solid #b8c6d8;border-radius:999px;background:#fff;color:#20334b;font-size:12px;font-weight:800;box-shadow:0 2px 5px #1d2d4210;touch-action:manipulation}.sound-toggle.sound-off{background:#e8edf5;color:#657084}
 
-.developer-credit{display:block;width:min(92%,440px);margin:9px auto 2px;padding:9px 18px;font-size:clamp(14px,3.8vw,18px);font-weight:900;color:#fff;text-align:center;letter-spacing:.15px;line-height:1.15;border-radius:999px;background:linear-gradient(135deg,#e50087 0%,#a90068 55%,#6f164f 100%);border:1px solid #ffb6df;box-shadow:0 3px 0 #650b48,0 5px 10px #39102a26,inset 0 1px 0 #ffffffa8;text-shadow:0 1px 2px #4a0733}
+.developer-credit{display:block;width:min(92%,440px);margin:4px auto 2px;padding:9px 18px;font-size:clamp(14px,3.8vw,18px);font-weight:900;color:#fff;text-align:center;letter-spacing:.15px;line-height:1.15;border-radius:999px;background:linear-gradient(135deg,#e50087 0%,#a90068 55%,#6f164f 100%);border:1px solid #ffb6df;box-shadow:0 3px 0 #650b48,0 5px 10px #39102a26,inset 0 1px 0 #ffffffa8;text-shadow:0 1px 2px #4a0733}
 
 .modal-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}.modal-actions button{min-height:44px;touch-action:manipulation}.modal-actions .secondary{background:#edf2f7;color:#243449;border:1px solid #c7d2e0;border-radius:10px;font-weight:800;padding:10px 14px}.modal-actions .primary{padding:10px 14px}
 
@@ -11,7 +11,7 @@
 .bottom-row .player-controls{padding:2px 0}
 .player-card .dice{margin:0 auto}
 
-/* Full Nice Ludo artwork: preserve the complete square image without cropping. */
-.header{padding:8px 0 7px}
+/* Compact full logo: keep the complete artwork without pushing the board down. */
+.header{padding:4px 0 3px}
 .header .title{display:flex;align-items:center;justify-content:center;width:100%;margin:0 auto}
-.header .brand-logo{display:block;width:min(78vw,280px);height:auto;max-height:none;object-fit:contain;filter:drop-shadow(0 3px 7px rgba(0,0,0,.25))}
+.header .brand-logo{display:block;width:76px;height:76px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2))}
