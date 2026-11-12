@@ -80,12 +80,15 @@ jobs:
           PY
           rm -f android/app/src/main/res/mipmap-anydpi/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
           python - <<'PY'
-          import re
           p='android/app/src/main/AndroidManifest.xml'
           s=open(p,encoding='utf-8').read()
-          s,n=re.subn(r'<application\\b', '<application android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round"', s, count=1)
-          if n != 1:
+          tag='<application'
+          pos=s.find(tag)
+          if pos < 0:
               raise SystemExit('Could not find application tag in AndroidManifest.xml')
+          insert=pos+len(tag)
+          attrs=' android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round"'
+          s=s[:insert]+attrs+s[insert:]
           open(p,'w',encoding='utf-8').write(s)
           PY
 
