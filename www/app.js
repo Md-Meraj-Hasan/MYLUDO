@@ -76,7 +76,7 @@ function startGame(){const count=Number($('playerCount').value);const players=co
  const tokens={};players.forEach(p=>{for(let i=0;i<4;i++)tokens[`${p}_${i}`]=-1;});state={players, names, tokens, paths:makePaths(),current:0,dice:0,canMove:false,sixStreak:0,snapshot:null,captured:new Set(),finishOrder:[],gameOver:false,rolling:false,animating:false,moveLocked:false};saveSnapshot();$('playerSetup').classList.add('hidden');$('game').classList.remove('hidden');renderPlayerCards();drawBoard();renderStatus();playSound('start');startBackgroundMusic();}
 $('startGame').addEventListener('click',startGame);
 $('newGame').addEventListener('click',()=>showConfirm('Start New Game?','Your current game progress will be lost. Do you want to start a new game?'));
-$('modalCancel').addEventListener('click',closeModal);
+$('modalCancel').addEventListener('click',()=>{exitRequested=false;closeModal();});
 $('modalConfirm').addEventListener('click',()=>{
  if(exitRequested){
   exitRequested=false;closeModal();
