@@ -99,22 +99,28 @@ jobs:
           splash=Image.new('RGBA',(512,512),(11,16,40,255))
           splash.alpha_composite(logo,((512-logo.width)//2,(512-logo.height)//2))
           splash.save('android/app/src/main/res/drawable/splash.png')
-          # Android 12 uses the platform-prefixed splash attributes.
+          # Update Android launch theme using XML (avoid fragile regex quoting).
+          import xml.etree.ElementTree as ET
           sp='android/app/src/main/res/values/styles.xml'
-          styles=open(sp,encoding='utf-8').read()
-          launch=re.search(r'<style\\s+name=["\\']AppTheme\\.NoActionBarLaunch["\\']([^>]*)>(.*?)</style>',styles,re.S)
-          if not launch:
+          tree=ET.parse(sp)
+          root=tree.getroot()
+          launch=root.find(".//style[@name='AppTheme.NoActionBarLaunch']")
+          if launch is None:
               raise SystemExit('AppTheme.NoActionBarLaunch style not found')
-          attrs=launch.group(1)
-          body=launch.group(2)
-          body=re.sub(r'\\s*<item\\s+name=["\\'](?:android:)?windowSplashScreenBackground["\\'][^>]*>.*?</item>','',body,flags=re.S)
-          body=re.sub(r'\\s*<item\\s+name=["\\'](?:android:)?windowSplashScreenAnimatedIcon["\\'][^>]*>.*?</item>','',body,flags=re.S)
-          body=re.sub(r'\\s*<item\\s+name=["\\']postSplashScreenTheme["\\'][^>]*>.*?</item>','',body,flags=re.S)
-          body=re.sub(r'\\s*<item\\s+name=["\\']android:windowBackground["\\'][^>]*>.*?</item>','',body,flags=re.S)
-          body+='\\n        <item name="android:windowSplashScreenBackground">#0B1028</item>\\n        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>\\n        <item name="android:windowBackground">@drawable/splash</item>\\n        '
-          replacement='<style name="AppTheme.NoActionBarLaunch"'+attrs+'>'+body+'</style>'
-          styles=styles[:launch.start()]+replacement+styles[launch.end():]
-          open(sp,'w',encoding='utf-8').write(styles)
+          launch.set('parent','Theme.SplashScreen')
+          remove_names={'android:windowSplashScreenBackground','android:windowSplashScreenAnimatedIcon','windowSplashScreenBackground','windowSplashScreenAnimatedIcon','postSplashScreenTheme','android:windowBackground'}
+          for item in list(launch):
+              if item.tag=='item' and item.get('name') in remove_names:
+                  launch.remove(item)
+          for name,value in [
+              ('android:windowSplashScreenBackground','#0B1028'),
+              ('android:windowSplashScreenAnimatedIcon','@mipmap/ic_launcher'),
+              ('postSplashScreenTheme','@style/AppTheme.NoActionBar'),
+              ('android:windowBackground','@drawable/splash')
+          ]:
+              item=ET.SubElement(launch,'item',{'name':name})
+              item.text=value
+          tree.write(sp,encoding='utf-8',xml_declaration=True)
           PY
 
       - name: Build debug APK
