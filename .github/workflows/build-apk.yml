@@ -99,23 +99,19 @@ jobs:
           splash=Image.new('RGBA',(512,512),(11,16,40,255))
           splash.alpha_composite(logo,((512-logo.width)//2,(512-logo.height)//2))
           splash.save('android/app/src/main/res/drawable/splash.png')
-          # Configure both legacy and Android 12+ native launch splash.
+          # Android 12 uses the platform-prefixed splash attributes.
           sp='android/app/src/main/res/values/styles.xml'
           styles=open(sp,encoding='utf-8').read()
-          launch=re.search(r'<style\s+name=["\']AppTheme\.NoActionBarLaunch["\']([^>]*)>(.*?)</style>',styles,re.S)
+          launch=re.search(r'<style\\s+name=["\\']AppTheme\\.NoActionBarLaunch["\\']([^>]*)>(.*?)</style>',styles,re.S)
           if not launch:
               raise SystemExit('AppTheme.NoActionBarLaunch style not found')
           attrs=launch.group(1)
-          if re.search(r'parent=["\'][^"\']+["\']',attrs):
-              attrs=re.sub(r'parent=["\'][^"\']+["\']','parent="Theme.SplashScreen"',attrs)
-          else:
-              attrs+=' parent="Theme.SplashScreen"'
           body=launch.group(2)
-          body=re.sub(r'\s*<item\s+name=["\'](?:android:)?windowSplashScreenBackground["\'][^>]*>.*?</item>','',body,flags=re.S)
-          body=re.sub(r'\s*<item\s+name=["\'](?:android:)?windowSplashScreenAnimatedIcon["\'][^>]*>.*?</item>','',body,flags=re.S)
-          body=re.sub(r'\s*<item\s+name=["\']postSplashScreenTheme["\'][^>]*>.*?</item>','',body,flags=re.S)
-          body=re.sub(r'\s*<item\s+name=["\']android:windowBackground["\'][^>]*>.*?</item>','',body,flags=re.S)
-          body+='\n        <item name="windowSplashScreenBackground">#0B1028</item>\n        <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>\n        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>\n        <item name="android:windowBackground">@drawable/splash</item>\n        '
+          body=re.sub(r'\\s*<item\\s+name=["\\'](?:android:)?windowSplashScreenBackground["\\'][^>]*>.*?</item>','',body,flags=re.S)
+          body=re.sub(r'\\s*<item\\s+name=["\\'](?:android:)?windowSplashScreenAnimatedIcon["\\'][^>]*>.*?</item>','',body,flags=re.S)
+          body=re.sub(r'\\s*<item\\s+name=["\\']postSplashScreenTheme["\\'][^>]*>.*?</item>','',body,flags=re.S)
+          body=re.sub(r'\\s*<item\\s+name=["\\']android:windowBackground["\\'][^>]*>.*?</item>','',body,flags=re.S)
+          body+='\\n        <item name="android:windowSplashScreenBackground">#0B1028</item>\\n        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>\\n        <item name="android:windowBackground">@drawable/splash</item>\\n        '
           replacement='<style name="AppTheme.NoActionBarLaunch"'+attrs+'>'+body+'</style>'
           styles=styles[:launch.start()]+replacement+styles[launch.end():]
           open(sp,'w',encoding='utf-8').write(styles)
