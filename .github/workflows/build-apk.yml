@@ -63,10 +63,22 @@ jobs:
         run: |
           set -eu
           mkdir -p android/app/src/main/res/drawable android/app/src/main/res/values android/app/src/main/res/mipmap-anydpi android/app/src/main/res/mipmap-anydpi-v26
-          cp android-res/drawable/ic_launcher_foreground.xml android/app/src/main/res/drawable/
-          cp android-res/mipmap-anydpi/ic_launcher.xml android/app/src/main/res/mipmap-anydpi/
-          cp android-res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/
-          cp android-res/mipmap-anydpi-v26/ic_launcher_round.xml android/app/src/main/res/mipmap-anydpi-v26/
+          python -m pip install --quiet cairosvg pillow
+          mkdir -p android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi
+          python - <<'PY'
+          import cairosvg
+          from PIL import Image
+          import io, os
+          svg=open('www/nice-ludo-logo.svg','rb').read()
+          png=cairosvg.svg2png(bytestring=svg,output_width=512,output_height=512)
+          im=Image.open(io.BytesIO(png)).convert('RGBA')
+          sizes={'mdpi':48,'hdpi':72,'xhdpi':96,'xxhdpi':144,'xxxhdpi':192}
+          for density,size in sizes.items():
+              out=im.resize((size,size),Image.Resampling.LANCZOS)
+              out.save(f'android/app/src/main/res/mipmap-{density}/ic_launcher.png')
+              out.save(f'android/app/src/main/res/mipmap-{density}/ic_launcher_round.png')
+          PY
+          sed -i 's#<application#<application android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round"#' android/app/src/main/AndroidManifest.xml
 
       - name: Build debug APK
         run: |
