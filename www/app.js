@@ -57,12 +57,17 @@ function playSound(kind){
 function stopBackgroundMusic(){if(musicTimer!==null){clearTimeout(musicTimer);musicTimer=null;}}
 function startBackgroundMusic(){
  stopBackgroundMusic();if(!soundEnabled||!state||state.gameOver)return;ensureAudio();musicStep=0;
- const melody=[523,659,784,659,587,698,880,698,523,659,784,988,880,784,659,587];
- const bass=[262,262,330,330,294,294,349,349];
+ // Bright original board-game theme with melody, warm bass and major-key chords.
+ const melody=[659,784,988,784,698,880,1047,880,659,784,988,1175,1047,988,880,784,587,698,880,698,659,784,988,784,523,659,784,988,880,784,659,523];
+ const bass=[131,131,165,165,147,147,175,175],chords=[[262,330,392],[330,392,494],[294,370,440],[349,440,523]];
  const tick=()=>{
   if(!soundEnabled||!state||state.gameOver){musicTimer=null;return;}
-  const ctx=ensureAudio();if(ctx){const t=ctx.currentTime+.02;const note=melody[musicStep%melody.length];tone(note,t,.20,'sine',.075);if(musicStep%2===0)tone(bass[(musicStep/2)%bass.length],t,.32,'triangle',.055);}
-  musicStep++;musicTimer=setTimeout(tick,280);
+  const ctx=ensureAudio();
+  if(ctx){const t=ctx.currentTime+.025,step=musicStep%32,n=melody[step];tone(n,t,.19,'triangle',.105);tone(n*2,t,.10,'sine',.025);
+   if(step%4===0){const chord=chords[Math.floor(step/4)%chords.length];chord.forEach((v,i)=>tone(v,t+i*.018,.42,'sine',.045));tone(bass[(step/4)%bass.length],t,.34,'triangle',.09);}
+   if(step%8===6)tone(1568,t,.07,'sine',.025);
+  }
+  musicStep++;musicTimer=setTimeout(tick,245);
  };
  tick();
 }
