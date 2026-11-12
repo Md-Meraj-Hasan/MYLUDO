@@ -38,9 +38,11 @@ jobs:
         run: |
           set -eu
           test -f package.json || { echo "ERROR: package.json missing"; exit 1; }
+          test -f capacitor.config.json || { echo "ERROR: capacitor.config.json missing"; exit 1; }
           test -f www/index.html || { echo "ERROR: www/index.html missing"; exit 1; }
           test -f www/app.js || { echo "ERROR: www/app.js missing"; exit 1; }
           test -f www/style.css || { echo "ERROR: www/style.css missing"; exit 1; }
+          test -f www/icon.svg || { echo "ERROR: www/icon.svg missing"; exit 1; }
 
       - name: Check JavaScript syntax
         run: node --check www/app.js
@@ -57,6 +59,16 @@ jobs:
       - name: Sync web assets
         run: npx cap sync android
 
+      - name: Apply Nice Ludo launcher icon
+        run: |
+          set -eu
+          mkdir -p android/app/src/main/res/drawable android/app/src/main/res/mipmap-anydpi android/app/src/main/res/mipmap-anydpi-v26
+          cp android-res/drawable/ic_launcher_foreground.xml android/app/src/main/res/drawable/
+          cp android-res/values/ic_launcher_background.xml android/app/src/main/res/values/
+          cp android-res/mipmap-anydpi/ic_launcher.xml android/app/src/main/res/mipmap-anydpi/
+          cp android-res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/
+          cp android-res/mipmap-anydpi-v26/ic_launcher_round.xml android/app/src/main/res/mipmap-anydpi-v26/
+
       - name: Build debug APK
         run: |
           cd android
@@ -67,7 +79,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Ludo-Android-APK
+          name: Nice-Ludo-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 7
