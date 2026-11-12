@@ -80,14 +80,13 @@ jobs:
           PY
           rm -f android/app/src/main/res/mipmap-anydpi/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
           python - <<'PY'
-          import xml.etree.ElementTree as ET
+          import re
           p='android/app/src/main/AndroidManifest.xml'
-          tree=ET.parse(p); root=tree.getroot()
-          ns='{http://schemas.android.com/apk/res/android}'
-          app=root.find('application')
-          app.set(ns+'icon','@mipmap/ic_launcher')
-          app.set(ns+'roundIcon','@mipmap/ic_launcher_round')
-          tree.write(p,encoding='utf-8',xml_declaration=True)
+          s=open(p,encoding='utf-8').read()
+          s,n=re.subn(r'<application\\b', '<application android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round"', s, count=1)
+          if n != 1:
+              raise SystemExit('Could not find application tag in AndroidManifest.xml')
+          open(p,'w',encoding='utf-8').write(s)
           PY
 
       - name: Build debug APK
