@@ -10,3 +10,7 @@
 .bottom-row .player-card{flex-direction:column-reverse}
 .bottom-row .player-controls{padding:2px 0}
 .player-card .dice{margin:0 auto}
+
+/* Nice Ludo colorful brand mark */
+.header .title{display:flex;align-items:center;justify-content:center;gap:9px}
+.header .brand-logo{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.28))}
