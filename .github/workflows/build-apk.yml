@@ -102,12 +102,12 @@ jobs:
           # Point Android 12+ native splash at the same artwork.
           sp='android/app/src/main/res/values/styles.xml'
           styles=open(sp,encoding='utf-8').read()
-          launch=re.search(r'<style\\s+name=["\\']AppTheme\\.NoActionBarLaunch["\\'][^>]*>(.*?)</style>',styles,re.S)
+          launch=re.search(r'<style\s+name=["\']AppTheme\.NoActionBarLaunch["\'][^>]*>(.*?)</style>',styles,re.S)
           if launch:
               body=launch.group(1)
-              body=re.sub(r'\\s*<item\\s+name=["\\']android:windowSplashScreenBackground["\\'][^>]*>.*?</item>','',body,flags=re.S)
-              body=re.sub(r'\\s*<item\\s+name=["\\']android:windowSplashScreenAnimatedIcon["\\'][^>]*>.*?</item>','',body,flags=re.S)
-              body+='\\n        <item name="android:windowSplashScreenBackground">#0B1028</item>\\n        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash</item>\\n        '
+              body=re.sub(r'\s*<item\s+name=["\']android:windowSplashScreenBackground["\'][^>]*>.*?</item>','',body,flags=re.S)
+              body=re.sub(r'\s*<item\s+name=["\']android:windowSplashScreenAnimatedIcon["\'][^>]*>.*?</item>','',body,flags=re.S)
+              body+='\n        <item name="android:windowSplashScreenBackground">#0B1028</item>\n        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash</item>\n        '
               styles=styles[:launch.start(1)]+body+styles[launch.end(1):]
               open(sp,'w',encoding='utf-8').write(styles)
           else:
