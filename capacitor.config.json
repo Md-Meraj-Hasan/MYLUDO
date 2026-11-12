@@ -2,5 +2,18 @@
   "appId": "org.merajgames.niceludo",
   "appName": "Nice Ludo",
   "webDir": "www",
-  "server": { "androidScheme": "https" }
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1800,
+      "launchAutoHide": true,
+      "backgroundColor": "#0B1028",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "FIT_CENTER",
+      "showSpinner": false,
+      "splashFullScreen": true
+    }
+  }
 }
