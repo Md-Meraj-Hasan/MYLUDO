@@ -3,7 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "description": "Nice Ludo - offline mobile Ludo game",
-  "scripts": {"open:android": "cap open android", "sync:android": "cap sync android"},
-  "dependencies": {"@capacitor/android": "^7.4.3", "@capacitor/core": "^7.4.3"},
-  "devDependencies": {"@capacitor/cli": "^7.4.3"}
+  "scripts": {
+    "open:android": "cap open android",
+    "sync:android": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/app": "^7.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
+  }
 }
