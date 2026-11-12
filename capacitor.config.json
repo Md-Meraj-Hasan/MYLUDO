@@ -1,6 +1,6 @@
 {
-  "appId": "org.merajgames.ludoprooffline",
-  "appName": "Ludo Village",
+  "appId": "org.merajgames.niceludo",
+  "appName": "Nice Ludo",
   "webDir": "www",
   "server": { "androidScheme": "https" }
 }
