@@ -9,23 +9,71 @@ const ORDER=['Green','Blue','Red','Yellow'];
 const SAFE=[[1,6],[8,1],[13,8],[6,13],[2,8],[6,2],[12,6],[8,12]];
 const $=id=>document.getElementById(id);
 let state=null;
-// Offline sound effects are synthesized locally with Web Audio; no network/assets required.
-let audioContext=null;
+// Premium offline Ludo audio: locally synthesized music + separate action effects.
+let audioContext=null,audioMaster=null,audioCompressor=null,musicTimer=null,musicStep=0;
 let soundEnabled=true;
 try { soundEnabled = localStorage.getItem('ludoSoundEnabled') !== 'false'; } catch (_) {}
 function updateSoundButton(){const b=$('soundToggle');if(!b)return;b.textContent=soundEnabled?'🔊 Sound ON':'🔇 Sound OFF';b.setAttribute('aria-pressed',String(soundEnabled));b.classList.toggle('sound-off',!soundEnabled);}
-function ensureAudio(){if(!soundEnabled)return null;try{const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return null;if(!audioContext)audioContext=new Ctx();if(audioContext.state==='suspended')audioContext.resume();return audioContext;}catch(_){return null;}}
-function tone(freq,when,duration,type='sine',volume=.08,endFreq=null){const ctx=ensureAudio();if(!ctx)return;const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(Math.max(30,freq),when);if(endFreq!==null)o.frequency.exponentialRampToValueAtTime(Math.max(30,endFreq),when+duration);g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(volume,when+.008);g.gain.exponentialRampToValueAtTime(.0001,when+duration);o.connect(g);g.connect(ctx.destination);o.start(when);o.stop(when+duration+.02);}
-function noiseHit(when,duration=.055,volume=.035){const ctx=ensureAudio();if(!ctx)return;const n=Math.max(1,Math.floor(ctx.sampleRate*duration));const buf=ctx.createBuffer(1,n,ctx.sampleRate),data=buf.getChannelData(0);for(let i=0;i<n;i++)data[i]=(Math.random()*2-1)*(1-i/n);const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),g=ctx.createGain();src.buffer=buf;filter.type='lowpass';filter.frequency.value=1800;g.gain.setValueAtTime(volume,when);g.gain.exponentialRampToValueAtTime(.0001,when+duration);src.connect(filter);filter.connect(g);g.connect(ctx.destination);src.start(when);src.stop(when+duration);}
-function playSound(kind){const ctx=ensureAudio();if(!ctx)return;const t=ctx.currentTime+.005;switch(kind){case 'dice': noiseHit(t,.12,.065);tone(520,t+.015,.075,'triangle',.07,240);tone(330,t+.08,.07,'triangle',.045,190);break;case 'move': tone(680,t,.035,'sine',.035,430);break;case 'capture': noiseHit(t,.16,.09);tone(180,t,.18,'sawtooth',.075,65);tone(95,t+.035,.2,'triangle',.055,45);break;case 'home': tone(523,t,.13,'sine',.065);tone(659,t+.11,.13,'sine',.065);tone(784,t+.22,.19,'sine',.075);break;case 'win': [523,659,784,1047].forEach((f,i)=>tone(f,t+i*.14,.28,'triangle',.07));break;}}
-$('soundToggle').addEventListener('click',()=>{soundEnabled=!soundEnabled;try{localStorage.setItem('ludoSoundEnabled',String(soundEnabled));}catch(_){}if(soundEnabled)playSound('move');updateSoundButton();});updateSoundButton();
+function ensureAudio(){
+ if(!soundEnabled)return null;
+ try{
+  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return null;
+  if(!audioContext){audioContext=new Ctx();audioMaster=audioContext.createGain();audioCompressor=audioContext.createDynamicsCompressor();audioCompressor.threshold.value=-16;audioCompressor.knee.value=18;audioCompressor.ratio.value=4;audioCompressor.attack.value=.004;audioCompressor.release.value=.18;audioMaster.gain.value=.92;audioMaster.connect(audioCompressor);audioCompressor.connect(audioContext.destination);}
+  if(audioContext.state==='suspended')audioContext.resume();
+  return audioContext;
+ }catch(_){return null;}
+}
+function tone(freq,when,duration,type='sine',volume=.18,endFreq=null){
+ const ctx=ensureAudio();if(!ctx||!audioMaster)return;
+ const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(Math.max(30,freq),when);
+ if(endFreq!==null)o.frequency.exponentialRampToValueAtTime(Math.max(30,endFreq),when+duration);
+ g.gain.setValueAtTime(.0001,when);g.gain.exponentialRampToValueAtTime(Math.max(.0002,volume),when+.012);g.gain.exponentialRampToValueAtTime(.0001,when+duration);
+ o.connect(g);g.connect(audioMaster);o.start(when);o.stop(when+duration+.025);
+}
+function noiseHit(when,duration=.09,volume=.16){
+ const ctx=ensureAudio();if(!ctx||!audioMaster)return;
+ const n=Math.max(1,Math.floor(ctx.sampleRate*duration)),buf=ctx.createBuffer(1,n,ctx.sampleRate),data=buf.getChannelData(0);
+ for(let i=0;i<n;i++)data[i]=(Math.random()*2-1)*(1-i/n);
+ const src=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),g=ctx.createGain();src.buffer=buf;filter.type='lowpass';filter.frequency.value=2400;
+ g.gain.setValueAtTime(volume,when);g.gain.exponentialRampToValueAtTime(.0001,when+duration);src.connect(filter);filter.connect(g);g.connect(audioMaster);src.start(when);src.stop(when+duration);
+}
+function playSound(kind){
+ const ctx=ensureAudio();if(!ctx)return;const t=ctx.currentTime+.008;
+ switch(kind){
+  case 'start': [392,523,659,784].forEach((f,i)=>tone(f,t+i*.085,.22,'triangle',.22));break;
+  case 'dice': noiseHit(t,.19,.24);tone(620,t+.015,.10,'triangle',.22,260);tone(410,t+.09,.10,'triangle',.18,190);tone(760,t+.17,.12,'sine',.17);break;
+  case 'diceResult': tone(660,t,.10,'triangle',.20);tone(880,t+.09,.16,'triangle',.22);break;
+  case 'move': tone(740,t,.045,'sine',.10,520);break;
+  case 'launch': [523,659,784].forEach((f,i)=>tone(f,t+i*.07,.14,'triangle',.20));break;
+  case 'capture': noiseHit(t,.22,.28);tone(220,t,.18,'sawtooth',.24,82);tone(130,t+.10,.22,'triangle',.20,55);break;
+  case 'safe': tone(880,t,.09,'sine',.19);tone(1175,t+.08,.13,'sine',.22);break;
+  case 'home': [523,659,784,1047].forEach((f,i)=>tone(f,t+i*.105,.22,'triangle',.23));break;
+  case 'turn': [587,740].forEach((f,i)=>tone(f,t+i*.10,.14,'sine',.16));break;
+  case 'noMove': tone(330,t,.16,'triangle',.18,220);tone(260,t+.13,.17,'sine',.14,190);break;
+  case 'win': [523,659,784,1047,1318].forEach((f,i)=>tone(f,t+i*.13,.30,'triangle',.24));break;
+  case 'tap': tone(660,t,.055,'sine',.12);break;
+ }
+}
+function stopBackgroundMusic(){if(musicTimer!==null){clearTimeout(musicTimer);musicTimer=null;}}
+function startBackgroundMusic(){
+ stopBackgroundMusic();if(!soundEnabled||!state||state.gameOver)return;ensureAudio();musicStep=0;
+ const melody=[523,659,784,659,587,698,880,698,523,659,784,988,880,784,659,587];
+ const bass=[262,262,330,330,294,294,349,349];
+ const tick=()=>{
+  if(!soundEnabled||!state||state.gameOver){musicTimer=null;return;}
+  const ctx=ensureAudio();if(ctx){const t=ctx.currentTime+.02;const note=melody[musicStep%melody.length];tone(note,t,.20,'sine',.045);if(musicStep%2===0)tone(bass[(musicStep/2)%bass.length],t,.32,'triangle',.035);}
+  musicStep++;musicTimer=setTimeout(tick,280);
+ };
+ tick();
+}
+$('soundToggle').addEventListener('click',()=>{soundEnabled=!soundEnabled;try{localStorage.setItem('ludoSoundEnabled',String(soundEnabled));}catch(_){}if(soundEnabled){playSound('tap');if(state)startBackgroundMusic();}else stopBackgroundMusic();updateSoundButton();});updateSoundButton();
 function buildNames(){const n=Number($('playerCount').value);const ps=n===2?['Green','Red']:n===3?['Green','Blue','Red']:ORDER;const holder=$('nameInputs');holder.innerHTML='';ps.forEach((p,i)=>{const wrap=document.createElement('label');wrap.className='name-field';wrap.innerHTML=`${p} player<input maxlength="12" autocomplete="off" value="${p}" aria-label="${p} player name">`;wrap.querySelector('input').dataset.player=p;holder.appendChild(wrap)});}
 $('playerCount').addEventListener('change',buildNames);buildNames();
 function pathForGreen(){const p=[];for(let i=1;i<6;i++)p.push([i,6]);for(let i=5;i>=0;i--)p.push([6,i]);p.push([7,0],[8,0]);for(let i=1;i<6;i++)p.push([8,i]);for(let i=9;i<15;i++)p.push([i,6]);p.push([14,7],[14,8]);for(let i=13;i>8;i--)p.push([i,8]);for(let i=9;i<15;i++)p.push([8,i]);p.push([7,14],[6,14]);for(let i=13;i>8;i--)p.push([6,i]);for(let i=5;i>=0;i--)p.push([i,8]);p.push([0,7],[0,6]);for(let i=1;i<7;i++)p.push([i,7]);return p;}
 function rotate(path){return path.map(([x,y])=>[14-y,x]);}
 function makePaths(){const g=pathForGreen();const b=rotate(g),r=rotate(b),y=rotate(r);return {Green:g,Blue:b,Red:r,Yellow:y};}
 function startGame(){const count=Number($('playerCount').value);const players=count===2?['Green','Red']:count===3?['Green','Blue','Red']:ORDER.slice();const names={};for(const input of document.querySelectorAll('#nameInputs input')){const v=input.value.trim();if(!/^(?=.{1,12}$)[A-Za-z]+(?: [A-Za-z]+)*$/.test(v)){showModal('Name Not Accepted','Please enter 1–12 letters; spaces between words are allowed.');input.focus();return;}names[input.dataset.player]=v;}
- const tokens={};players.forEach(p=>{for(let i=0;i<4;i++)tokens[`${p}_${i}`]=-1;});state={players, names, tokens, paths:makePaths(),current:0,dice:0,canMove:false,sixStreak:0,snapshot:null,captured:new Set(),finishOrder:[],gameOver:false,rolling:false,animating:false,moveLocked:false};saveSnapshot();$('playerSetup').classList.add('hidden');$('game').classList.remove('hidden');renderPlayerCards();drawBoard();renderStatus();}
+ const tokens={};players.forEach(p=>{for(let i=0;i<4;i++)tokens[`${p}_${i}`]=-1;});state={players, names, tokens, paths:makePaths(),current:0,dice:0,canMove:false,sixStreak:0,snapshot:null,captured:new Set(),finishOrder:[],gameOver:false,rolling:false,animating:false,moveLocked:false};saveSnapshot();$('playerSetup').classList.add('hidden');$('game').classList.remove('hidden');renderPlayerCards();drawBoard();renderStatus();playSound('start');startBackgroundMusic();}
 $('startGame').addEventListener('click',startGame);
 $('newGame').addEventListener('click',()=>showConfirm('Start New Game?','Your current game progress will be lost. Do you want to start a new game?'));
 $('modalCancel').addEventListener('click',closeModal);
@@ -58,13 +106,13 @@ function tokenCell(tag){const p=tag.split('_')[0],pos=state.tokens[tag];if(pos<0
 function renderTokens(){const svg=$('board');svg.querySelectorAll('.token-layer').forEach(e=>e.remove());const layer=svgEl('g',{class:'token-layer'});const groups={};for(const [tag,pos] of Object.entries(state.tokens)){if(pos<0)continue;const p=tag.split('_')[0],cell=state.paths[p][pos],key=cell.join(',');(groups[key]||(groups[key]=[])).push(tag);}const movable=new Set(state.canMove?movableTokens():[]);const tags=Object.keys(state.tokens);tags.sort((a,b)=>Number(a.startsWith(currentPlayer()+'_'))-Number(b.startsWith(currentPlayer()+'_')));for(const tag of tags){const p=tag.split('_')[0],pos=state.tokens[tag];let [cx,cy]=tokenCell(tag);if(pos>=0){const cell=state.paths[p][pos],g=groups[cell.join(',')];if(g.length>1){const offsets=[[-.22,-.22],[.22,-.22],[-.22,.22],[.22,.22]],o=offsets[g.indexOf(tag)%4];cx+=o[0];cy+=o[1];}}const x=cx*40,y=cy*40;const g=svgEl('g',{class:'token-layer',transform:`translate(${x} ${y})`},layer);const circle=svgEl('circle',{cx:0,cy:0,r:g&&pos>=0&&groups[state.paths[p][pos].join(',')].length>1?13:16,fill:'#000',stroke:movable.has(tag)?'#111':'#000','stroke-width':movable.has(tag)?4:1,'stroke-dasharray':movable.has(tag)?'4 3':'none',class:'token'+(movable.has(tag)?' movable':'')},g);svgEl('circle',{cx:0,cy:0,r:12,fill:COLORS[p].token,stroke:COLORS[p].token},g);svgEl('circle',{cx:0,cy:0,r:7.5,fill:COLORS[p].inner},g);svgEl('circle',{cx:0,cy:0,r:5.5,fill:'none',stroke:'#fff','stroke-width':1.5},g);g.style.cursor='pointer';g.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();moveToken(tag);},{passive:false});} }
 function renderStatus(){const p=currentPlayer();for(const p2 of ORDER){const card=$(`card-${p2}`),dice=$(`dice-${p2}`);if(!card||!dice)continue;const active=p2===p&&!state.gameOver;card.classList.toggle('active',active);card.style.setProperty('--turn-color',COLORS[p2].name);dice.style.setProperty('--turn-color',COLORS[p2].name);dice.classList.toggle('active',active&&!state.canMove&&!state.rolling&&!state.animating);dice.disabled=!active||state.canMove||state.rolling||state.animating||state.gameOver;dice.textContent=(active&&state.dice)?String(state.dice):'?';}}
 function rerender(){renderPlayerCards();drawBoard();renderStatus();}
-function rollDice(p){if(!state||state.gameOver||p!==currentPlayer()||state.canMove||state.rolling||state.animating||state.moveLocked)return;state.rolling=true;playSound('dice');renderStatus();setTimeout(()=>{state.rolling=false;state.dice=Math.random()<.35?6:1+Math.floor(Math.random()*5);state.sixStreak=state.dice===6?state.sixStreak+1:0;if(state.sixStreak>=3){restoreSnapshot();state.dice=6;renderTokens();renderStatus();showModal('Turn Forfeited','Three sixes in a row! Your whole turn has been cancelled.');setTimeout(()=>switchTurn(),450);return;}const movable=movableTokens();if(movable.length){state.canMove=true;renderTokens();renderStatus();}else{renderStatus();setTimeout(()=>{if(!state||state.gameOver)return;state.dice=0;switchTurn();},700);}},140);}
-function moveToken(tag){if(!state||state.gameOver||!state.canMove||state.animating||state.moveLocked||!movableTokens().includes(tag)||!tag.startsWith(currentPlayer()+'_'))return;const p=tag.split('_')[0],cur=state.tokens[tag];let route;if(cur===-1)route={final:0,visited:[0],home:false};else route=calcRoute(p,cur,state.dice);if(!route)return;state.canMove=false;state.animating=true;state.moveLocked=true;renderStatus();const points=route.visited;let i=0;function step(){if(i<points.length){state.tokens[tag]=points[i];renderTokens();playSound('move');i++;setTimeout(step,85);}else{state.tokens[tag]=route.final;state.animating=false;state.moveLocked=false;afterMove(tag,route.home);}}step();}
-function afterMove(tag,reachedHome){const p=tag.split('_')[0];const pos=state.tokens[tag];let killed=false;if(pos>=0){const cell=state.paths[p][pos];if(!SAFE.some(c=>same(c,cell))&&blockOwner(cell)!==null&&blockOwner(cell)!==p){/* opposing block is protected */}else if(!SAFE.some(c=>same(c,cell))){for(const [otherTag,otherPos] of Object.entries(state.tokens)){if(otherTag===tag||otherPos<0)continue;const op=otherTag.split('_')[0];if(op===p||otherPos>=state.paths[op].length)continue;if(same(cell,state.paths[op][otherPos])){state.tokens[otherTag]=-1;killed=true;state.captured.add(p);playSound('capture');showModal('Token Captured',`${state.names[p]} captured ${state.names[op]}'s token. It returns to the starting area.`);}}}}
+function rollDice(p){if(!state||state.gameOver||p!==currentPlayer()||state.canMove||state.rolling||state.animating||state.moveLocked)return;state.rolling=true;playSound('dice');renderStatus();setTimeout(()=>{state.rolling=false;state.dice=Math.random()<.35?6:1+Math.floor(Math.random()*5);playSound('diceResult');state.sixStreak=state.dice===6?state.sixStreak+1:0;if(state.sixStreak>=3){restoreSnapshot();state.dice=6;renderTokens();renderStatus();showModal('Turn Forfeited','Three sixes in a row! Your whole turn has been cancelled.');setTimeout(()=>switchTurn(),450);return;}const movable=movableTokens();if(movable.length){state.canMove=true;renderTokens();renderStatus();}else{playSound('noMove');renderStatus();setTimeout(()=>{if(!state||state.gameOver)return;state.dice=0;switchTurn();},700);}},140);}
+function moveToken(tag){if(!state||state.gameOver||!state.canMove||state.animating||state.moveLocked||!movableTokens().includes(tag)||!tag.startsWith(currentPlayer()+'_'))return;const p=tag.split('_')[0],cur=state.tokens[tag];let route;if(cur===-1)route={final:0,visited:[0],home:false};else route=calcRoute(p,cur,state.dice);if(!route)return;playSound(cur===-1?'launch':'tap');state.canMove=false;state.animating=true;state.moveLocked=true;renderStatus();const points=route.visited;let i=0;function step(){if(i<points.length){state.tokens[tag]=points[i];renderTokens();playSound('move');i++;setTimeout(step,85);}else{state.tokens[tag]=route.final;state.animating=false;state.moveLocked=false;afterMove(tag,route.home);}}step();}
+function afterMove(tag,reachedHome){const p=tag.split('_')[0];const pos=state.tokens[tag];let killed=false;if(pos>=0){const cell=state.paths[p][pos];if(SAFE.some(c=>same(c,cell))){playSound('safe');}if(!SAFE.some(c=>same(c,cell))&&blockOwner(cell)!==null&&blockOwner(cell)!==p){/* opposing block is protected */}else if(!SAFE.some(c=>same(c,cell))){for(const [otherTag,otherPos] of Object.entries(state.tokens)){if(otherTag===tag||otherPos<0)continue;const op=otherTag.split('_')[0];if(op===p||otherPos>=state.paths[op].length)continue;if(same(cell,state.paths[op][otherPos])){state.tokens[otherTag]=-1;killed=true;state.captured.add(p);playSound('capture');showModal('Token Captured',`${state.names[p]} captured ${state.names[op]}'s token. It returns to the starting area.`);}}}}
 if(reachedHome){playSound('home');showModal('Token Home',`${state.names[p]}'s token has reached home.`);}const finished=[0,1,2,3].every(i=>state.tokens[`${p}_${i}`]===state.paths[p].length-1);if(finished&&!state.finishOrder.includes(p)){state.finishOrder.push(p);const place=state.finishOrder.length;if(place>=Math.max(1,state.players.length-1)){state.gameOver=true;const words=['1st','2nd','3rd','4th'];const lines=['FINAL RESULTS','',...state.finishOrder.map((c,i)=>`${words[i]} Place — ${state.names[c]}${i===0?' (Winner)':''}`),...state.players.filter(c=>!state.finishOrder.includes(c)).map(c=>`Did not finish — ${state.names[c]}`)];showModal('GAME OVER',lines.join('\n'));}else showModal('GAME UPDATE',`${state.names[p]} finished in ${place===1?'1st':place===2?'2nd':place===3?'3rd':place+'th'} place.\n\nWell played!`);}
 renderTokens();endMove(killed,reachedHome);}
 function endMove(killed,homeRun){if(state.gameOver){state.canMove=false;renderStatus();return;}state.canMove=false;if(state.dice!==6&&!killed&&!homeRun)switchTurn();else{state.moveLocked=false;renderStatus();}}
-function switchTurn(){if(!state||state.gameOver)return;state.canMove=false;state.rolling=false;state.moveLocked=false;for(let i=0;i<state.players.length;i++){state.current=(state.current+1)%state.players.length;if(!state.finishOrder.includes(currentPlayer()))break;}state.dice=0;saveSnapshot();renderTokens();renderStatus();}
+function switchTurn(){if(!state||state.gameOver)return;state.canMove=false;state.rolling=false;state.moveLocked=false;for(let i=0;i<state.players.length;i++){state.current=(state.current+1)%state.players.length;if(!state.finishOrder.includes(currentPlayer()))break;}state.dice=0;saveSnapshot();renderTokens();renderStatus();playSound('turn');}
 function closeModal(){$('modal').classList.add('hidden');$('modalOk').classList.remove('hidden');$('modalCancel').classList.add('hidden');$('modalConfirm').classList.add('hidden');}
 function showModal(title,message){$('modalTitle').textContent=title;$('modalMessage').textContent=message;$('modalOk').classList.remove('hidden');$('modalCancel').classList.add('hidden');$('modalConfirm').classList.add('hidden');$('modal').classList.remove('hidden');}
 function showConfirm(title,message){$('modalTitle').textContent=title;$('modalMessage').textContent=message;$('modalOk').classList.add('hidden');$('modalCancel').classList.remove('hidden');$('modalConfirm').classList.remove('hidden');$('modal').classList.remove('hidden');}
