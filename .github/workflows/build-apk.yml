@@ -92,6 +92,26 @@ jobs:
           tag=tag[:-1] + ' android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round">'
           s=s[:match.start()]+tag+s[match.end():]
           open(p,'w',encoding='utf-8').write(s)
+          # Keep the full original artwork for the native Android startup splash.
+          from PIL import Image
+          logo=Image.open('www/nice-ludo-logo.png').convert('RGBA')
+          logo.thumbnail((512,512),Image.Resampling.LANCZOS)
+          splash=Image.new('RGBA',(512,512),(11,16,40,255))
+          splash.alpha_composite(logo,((512-logo.width)//2,(512-logo.height)//2))
+          splash.save('android/app/src/main/res/drawable/splash.png')
+          # Point Android 12+ native splash at the same artwork.
+          sp='android/app/src/main/res/values/styles.xml'
+          styles=open(sp,encoding='utf-8').read()
+          launch=re.search(r'<style\\s+name=["\\']AppTheme\\.NoActionBarLaunch["\\'][^>]*>(.*?)</style>',styles,re.S)
+          if launch:
+              body=launch.group(1)
+              body=re.sub(r'\\s*<item\\s+name=["\\']android:windowSplashScreenBackground["\\'][^>]*>.*?</item>','',body,flags=re.S)
+              body=re.sub(r'\\s*<item\\s+name=["\\']android:windowSplashScreenAnimatedIcon["\\'][^>]*>.*?</item>','',body,flags=re.S)
+              body+='\\n        <item name="android:windowSplashScreenBackground">#0B1028</item>\\n        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash</item>\\n        '
+              styles=styles[:launch.start(1)]+body+styles[launch.end(1):]
+              open(sp,'w',encoding='utf-8').write(styles)
+          else:
+              raise SystemExit('AppTheme.NoActionBarLaunch style not found; cannot configure native startup logo')
           PY
 
       - name: Build debug APK
