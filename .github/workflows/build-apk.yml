@@ -62,7 +62,7 @@ jobs:
       - name: Apply Nice Ludo launcher icon
         run: |
           set -eu
-          mkdir -p android/app/src/main/res/drawable android/app/src/main/res/mipmap-anydpi android/app/src/main/res/mipmap-anydpi-v26
+          mkdir -p android/app/src/main/res/drawable android/app/src/main/res/values android/app/src/main/res/mipmap-anydpi android/app/src/main/res/mipmap-anydpi-v26
           cp android-res/drawable/ic_launcher_foreground.xml android/app/src/main/res/drawable/
           cp android-res/values/ic_launcher_background.xml android/app/src/main/res/values/
           cp android-res/mipmap-anydpi/ic_launcher.xml android/app/src/main/res/mipmap-anydpi/
