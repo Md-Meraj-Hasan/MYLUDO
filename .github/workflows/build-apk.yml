@@ -63,15 +63,15 @@ jobs:
         run: |
           set -eu
           mkdir -p android/app/src/main/res/drawable android/app/src/main/res/values android/app/src/main/res/mipmap-anydpi android/app/src/main/res/mipmap-anydpi-v26
-          python -m pip install --quiet cairosvg pillow
+          python -m pip install --quiet pillow
           mkdir -p android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi
           python - <<'PY'
-          import cairosvg
           from PIL import Image
-          import io, os
-          svg=open('www/nice-ludo-logo.svg','rb').read()
-          png=cairosvg.svg2png(bytestring=svg,output_width=512,output_height=512)
-          im=Image.open(io.BytesIO(png)).convert('RGBA')
+          im=Image.open('www/nice-ludo-logo.png').convert('RGBA')
+          im.thumbnail((512,512),Image.Resampling.LANCZOS)
+          canvas=Image.new('RGBA',(512,512),(0,0,0,255))
+          canvas.alpha_composite(im,((512-im.width)//2,(512-im.height)//2))
+          im=canvas
           sizes={'mdpi':48,'hdpi':72,'xhdpi':96,'xxhdpi':144,'xxxhdpi':192}
           for density,size in sizes.items():
               out=im.resize((size,size),Image.Resampling.LANCZOS)
