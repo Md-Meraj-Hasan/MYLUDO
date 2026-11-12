@@ -90,7 +90,14 @@ const nativeAppPlugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacit
 if(nativeAppPlugin&&nativeAppPlugin.addListener){
  nativeAppPlugin.addListener('backButton',()=>{
   exitRequested=true;
-  showConfirm('Exit Nice Ludo?','Do you want to exit the app?');
+  $('modalCancel').textContent='NO';
+  $('modalConfirm').textContent='YES';
+  $('modalTitle').textContent='Exit Nice Ludo?';
+  $('modalMessage').textContent='Do you want to exit the app?';
+  $('modalOk').classList.add('hidden');
+  $('modalCancel').classList.remove('hidden');
+  $('modalConfirm').classList.remove('hidden');
+  $('modal').classList.remove('hidden');
  });
 }
 function saveSnapshot(){state.snapshot={tokens:{...state.tokens},captured:new Set(state.captured),finishOrder:state.finishOrder.slice()};state.sixStreak=0;}
@@ -130,6 +137,6 @@ function endMove(killed,homeRun){if(state.gameOver){state.canMove=false;renderSt
 function switchTurn(){if(!state||state.gameOver)return;state.canMove=false;state.rolling=false;state.moveLocked=false;for(let i=0;i<state.players.length;i++){state.current=(state.current+1)%state.players.length;if(!state.finishOrder.includes(currentPlayer()))break;}state.dice=0;saveSnapshot();renderTokens();renderStatus();playSound('turn');}
 function closeModal(){$('modal').classList.add('hidden');$('modalOk').classList.remove('hidden');$('modalCancel').classList.add('hidden');$('modalConfirm').classList.add('hidden');}
 function showModal(title,message){$('modalTitle').textContent=title;$('modalMessage').textContent=message;$('modalOk').classList.remove('hidden');$('modalCancel').classList.add('hidden');$('modalConfirm').classList.add('hidden');$('modal').classList.remove('hidden');}
-function showConfirm(title,message){$('modalTitle').textContent=title;$('modalMessage').textContent=message;$('modalOk').classList.add('hidden');$('modalCancel').classList.remove('hidden');$('modalConfirm').classList.remove('hidden');$('modal').classList.remove('hidden');}
+function showConfirm(title,message){$('modalCancel').textContent='CANCEL';$('modalConfirm').textContent='NEW GAME';$('modalTitle').textContent=title;$('modalMessage').textContent=message;$('modalOk').classList.add('hidden');$('modalCancel').classList.remove('hidden');$('modalConfirm').classList.remove('hidden');$('modal').classList.remove('hidden');}
 $('modalOk').addEventListener('click',closeModal);
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
