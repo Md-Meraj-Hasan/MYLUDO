@@ -9,6 +9,7 @@ const ORDER=['Green','Blue','Red','Yellow'];
 const SAFE=[[1,6],[8,1],[13,8],[6,13],[2,8],[6,2],[12,6],[8,12]];
 const $=id=>document.getElementById(id);
 let state=null;
+let exitRequested=false;
 // Premium offline Ludo audio: locally synthesized music + separate action effects.
 let audioContext=null,audioMaster=null,audioCompressor=null,musicTimer=null,musicStep=0;
 let soundEnabled=true;
@@ -76,7 +77,22 @@ function startGame(){const count=Number($('playerCount').value);const players=co
 $('startGame').addEventListener('click',startGame);
 $('newGame').addEventListener('click',()=>showConfirm('Start New Game?','Your current game progress will be lost. Do you want to start a new game?'));
 $('modalCancel').addEventListener('click',closeModal);
-$('modalConfirm').addEventListener('click',()=>{closeModal();state=null;$('game').classList.add('hidden');$('playerSetup').classList.remove('hidden');buildNames();});
+$('modalConfirm').addEventListener('click',()=>{
+ if(exitRequested){
+  exitRequested=false;closeModal();
+  const appPlugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
+  if(appPlugin&&appPlugin.exitApp)appPlugin.exitApp();
+  return;
+ }
+ closeModal();state=null;$('game').classList.add('hidden');$('playerSetup').classList.remove('hidden');buildNames();
+});
+const nativeAppPlugin=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;
+if(nativeAppPlugin&&nativeAppPlugin.addListener){
+ nativeAppPlugin.addListener('backButton',()=>{
+  exitRequested=true;
+  showConfirm('Exit Nice Ludo?','Do you want to exit the app?');
+ });
+}
 function saveSnapshot(){state.snapshot={tokens:{...state.tokens},captured:new Set(state.captured),finishOrder:state.finishOrder.slice()};state.sixStreak=0;}
 function restoreSnapshot(){if(state.snapshot){state.tokens={...state.snapshot.tokens};state.captured=new Set(state.snapshot.captured);state.finishOrder=state.snapshot.finishOrder.slice();}state.sixStreak=0;state.dice=0;state.canMove=false;}
 function currentPlayer(){return state.players[state.current];}
