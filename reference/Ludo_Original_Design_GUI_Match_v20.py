@@ -1101,8 +1101,10 @@ class LudoGame:
                 or getattr(self, "_turn_action_locked", False)):
             return
 
-        # House rule: 6 has a 35% chance; 1-5 share the remaining 65%.
-        self.dice_value = 6 if random.random() < 0.35 else random.randint(1, 5)
+        # Dice balance: normal six chance is 35%. After two consecutive
+        # sixes, the third six is rare (2%); 1-5 share the remaining chance.
+        six_chance = 0.02 if self.six_streak >= 2 else 0.35
+        self.dice_value = 6 if random.random() < six_chance else random.randint(1, 5)
 
         if self.dice_value == 6:
             self.six_streak += 1
